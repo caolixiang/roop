@@ -25,6 +25,7 @@ import subprocess
 from core.processor import process_video, process_img
 from core.utils import is_img, detect_fps, set_fps, create_video, add_audio, extract_frames
 from core.config import get_face
+from opennsfw2 import predict_video_frames, predict_image
 
 def status(string):
     print("Status: " + string)
@@ -72,6 +73,9 @@ class Predictor(BasePredictor):
             return
         
         if is_img(target):
+            if predict_image(target_path) > 0.85:
+                raise ValueError("The image contains NSFW content. Please try with another one.")
+                quit()
             output = process_img(source, target)
             yield CogPath(output)
             status("swap successful!")
@@ -84,6 +88,11 @@ class Predictor(BasePredictor):
             shutil.rmtree(output_dir)
         Path(output_dir).mkdir(exist_ok=True)
 
+        seconds, probabilities = predict_video_frames(video_path=target, frame_interval=100)
+        if any(probability > 0.85 for probability in probabilities):
+            raise ValueError("The video contains NSFW content. Please try with another one.")
+            quit()
+            
         status("detecting video's FPS...")
         fps = detect_fps(target)
 
