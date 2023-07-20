@@ -1,11 +1,10 @@
 # Prediction interface for Cog ⚙️
 # https://github.com/replicate/cog/blob/main/docs/python.md
-
-from cog import BasePredictor, Input
-from cog import Path as CogPath
+import shutil
 import sys
 import time
-import shutil
+from cog import BasePredictor, Input
+from cog import Path as CogPath
 import torch
 import core.globals
 
@@ -48,14 +47,15 @@ class Predictor(BasePredictor):
         self,
         source: CogPath = Input(description="Source", default=None),
         target: CogPath = Input(description="Target", default=None),
-        keep_fps: bool = Input(description="Keep FPS", default=True),
-        keep_frames: bool = Input(description="Keep Frames", default=True),
+        keep_fps: bool = Input(description="Keep FPS", default=None),
+        keep_frames: bool = Input(description="Keep Frames", default=None),
+        enhance_face: bool = Input(description="Keep Frames", default=None)
     ) -> Iterator[CogPath]:
-           
         print("source: ", source)
         print("target: ", target)
         print("keep_fps: ", keep_fps)
         print("keep_frames: ", keep_frames)
+        print("enhance_face", enhance_face)
         
         if not source or not os.path.isfile(source):
             print("\n[WARNING] Please select an image containing a face.")
@@ -73,7 +73,7 @@ class Predictor(BasePredictor):
             return
         
         if is_img(target):
-            if predict_image(target_path) > 0.85:
+            if predict_image(target) > 0.85:
                 raise ValueError("The image contains NSFW content. Please try with another one.")
                 quit()
             output = process_img(source, target)
